@@ -245,7 +245,11 @@ If no prior research exists, say: "No prior research found on this topic. Starti
 Use extended thinking to decompose the user's topic into research questions.
 
 **Decomposition rules:**
-1. Generate 5-15 research questions that collectively cover the topic
+1. Generate research questions that collectively cover the topic:
+   - Quick/Standard: 5-15 questions
+   - Deep: 15-25 questions
+   - Exhaustive: 20-35 questions
+   - Nuclear: 30-50 questions
 2. If prior research exists, skip questions already answered (cite the prior source)
 3. Classify each question:
    - **Factual lookup** — has a definitive answer (dates, numbers, specs)
@@ -256,6 +260,10 @@ Use extended thinking to decompose the user's topic into research questions.
    - Keywords for WebSearch
    - Specific URLs to fetch (if known)
    - Whether Browse would help (complex SPAs, paywalled content)
+5. For Deep/Exhaustive/Nuclear: **split broad questions into sub-questions** to maximize
+   parallel coverage. Example: instead of "How does lighting work in AI prompting?",
+   split into "portrait lighting keywords", "atmospheric lighting effects",
+   "studio lighting setups", "natural time-based lighting" — each gets its own agent.
 
 **Present the plan and ask for depth:**
 
@@ -269,7 +277,8 @@ Use AskUserQuestion:
 - **A) Quick** — 5-10 sources, ~$0.50, ~2 min. Covers the basics.
 - **B) Standard** — 15-30 sources, ~$2, ~5 min. Good coverage of all questions. `RECOMMENDATION: Choose B — best balance of depth and speed. Completeness: 7/10`
 - **C) Deep** — 30-60 sources, ~$5, ~10 min. Thorough with cross-referencing. `Completeness: 9/10`
-- **D) Exhaustive** — 60-100+ sources, ~$10, ~20 min. Leave no stone unturned. `Completeness: 10/10`"
+- **D) Exhaustive** — 60-100+ sources, ~$10, ~20 min. Leave no stone unturned. `Completeness: 10/10`
+- **E) Nuclear** — 150-200+ sources, ~$20, ~30 min. 100+ agent swarm across 5 waves. Maximum depth and cross-referencing. `Completeness: 11/10`"
 
 Record the user's depth choice for agent wave sizing.
 
@@ -292,29 +301,37 @@ Record the SESSION_DIR path for all agent instructions.
 
 Based on the depth the user chose:
 
-| Depth | Wave 1 agents | WebFetch cap per agent |
-|-------|--------------|----------------------|
-| Quick | 5-8 | 2 |
-| Standard | 10-12 | 3 |
-| Deep | 12-15 | 3 |
-| Exhaustive | 15-20 | 3 |
+| Depth | Wave 1 agents | WebFetch cap per agent | Search variations |
+|-------|--------------|----------------------|-------------------|
+| Quick | 5-8 | 3 | 2 |
+| Standard | 10-15 | 4 | 3 |
+| Deep | 15-25 | 5 | 3 |
+| Exhaustive | 25-35 | 5 | 3 |
+| Nuclear | 35-50 | 5 | 4 |
+
+**Batching for large swarms:** If launching more than 20 agents, split into batches
+of 15-20. Launch Batch A, then immediately launch Batch B without waiting for A
+to complete. All batches run concurrently — the batching is only to fit within a
+single tool-call message. Do NOT wait between batches.
 
 Launch agents in parallel using the Agent tool. Each agent gets this instruction template
 (fill in the specifics per question):
 
 > You are a research agent. Your task: answer the research question below by searching
-> the web and extracting findings.
+> the web and extracting findings. Work autonomously — do not ask for permission or
+> confirmation. Fetch any URL that looks relevant.
 >
 > **Question:** [the research question]
-> **Search keywords:** [2-3 keyword variations to try]
+> **Search keywords:** [2-4 keyword variations to try]
 > **Output file:** [SESSION_DIR]/wave1-[id].md
 >
 > **Instructions:**
-> 1. Use WebSearch with the provided keywords (try 2-3 variations)
-> 2. From the search results, use WebFetch on the top 3 most relevant URLs (HARD CAP: [cap] WebFetch calls)
-> 3. Extract key findings, quotes, and data points
-> 4. Rate each source: ★★★ Primary (official docs, peer-reviewed, first-party data), ★★ Secondary (reputable journalism, expert blogs, established references), ★ Tertiary (forums, aggregators, unverified claims)
-> 5. Write your findings to the output file in this format:
+> 1. Use WebSearch with the provided keywords (try all variations)
+> 2. From the search results, use WebFetch on the most relevant URLs (HARD CAP: [cap] WebFetch calls)
+> 3. If a WebFetch fails (paywall, timeout, 403), skip it and try the next URL. Do NOT stop.
+> 4. Extract key findings, quotes, and data points
+> 5. Rate each source: ★★★ Primary (official docs, peer-reviewed, first-party data), ★★ Secondary (reputable journalism, expert blogs, established references), ★ Tertiary (forums, aggregators, unverified claims)
+> 6. Write your findings to the output file in this format:
 >
 > ```
 > # Research: [question]
@@ -331,13 +348,17 @@ Launch agents in parallel using the Agent tool. Each agent gets this instruction
 >
 > ## Gaps
 > - [what this question didn't fully answer]
+>
+> ## Promising Leads (for Wave 2)
+> - [URLs or sub-topics worth deeper investigation]
 > ```
 >
 > Be thorough but stay focused on the question. Do NOT hallucinate sources — only cite
-> URLs you actually fetched.
+> URLs you actually fetched. If you find promising URLs you couldn't fetch within your
+> cap, list them under "Promising Leads" for Wave 2 agents.
 
 Launch all Wave 1 agents using the Agent tool. Use `subagent_type: "search-specialist"`
-for each. Run them all in parallel (multiple Agent calls in one message).
+for each. Run them all in parallel (multiple Agent calls in one message, batched if >20).
 
 **Graceful degradation:** If the Agent tool is unavailable or errors on the first call,
 fall back to sequential mode: run WebSearch and WebFetch yourself, one question at a time.
@@ -361,39 +382,45 @@ Read and analyze the results. Identify:
 2. Which need deeper investigation (promising leads found)
 3. Which have contradictions that need resolution
 4. Which have gaps
+5. Collect all "Promising Leads" from Wave 1 agents for Wave 2 targeting
 
 ### Step 2d: Wave 2 — Depth (skip if Quick depth or Wave 1 suffices)
 
 | Depth | Wave 2 agents | WebFetch cap per agent |
 |-------|--------------|----------------------|
-| Standard | 3-5 | 5 |
-| Deep | 5-8 | 5 |
-| Exhaustive | 8-12 | 5 |
+| Standard | 5-8 | 5 |
+| Deep | 10-15 | 5 |
+| Exhaustive | 15-20 | 6 |
+| Nuclear | 25-35 | 6 |
 
-Wave 2 agents follow up on promising leads from Wave 1. Each gets:
+Wave 2 agents follow up on promising leads, unanswered questions, and thin areas
+from Wave 1. Each gets:
 
 > You are a depth research agent. Wave 1 found initial findings on [topic].
-> Your task: follow up on these specific leads.
+> Your task: follow up on these specific leads. Work autonomously — fetch any
+> URL that looks relevant without asking for permission.
 >
 > **Follow-up task:** [specific URL to read deeper, or specific sub-question]
 > **Context from Wave 1:** [relevant findings to build on]
 > **Output file:** [SESSION_DIR]/wave2-[id].md
 >
 > **Instructions:**
-> 1. Use WebFetch on the specific URLs identified (HARD CAP: 5 WebFetch calls)
+> 1. Use WebFetch on the specific URLs identified (HARD CAP: [cap] WebFetch calls)
 > 2. If needed, use WebSearch for more specific queries
-> 3. Rate sources with ★ quality tiers
-> 4. Write findings in the same format as Wave 1
-> 5. Specifically note anything that CONFIRMS or CONTRADICTS Wave 1 findings
+> 3. If a fetch fails, skip it and move on. Do NOT stop or ask for help.
+> 4. Rate sources with ★ quality tiers
+> 5. Write findings in the same format as Wave 1
+> 6. Specifically note anything that CONFIRMS or CONTRADICTS Wave 1 findings
 
-Launch Wave 2 agents in parallel. Read results when complete.
+Launch Wave 2 agents in parallel (batched if >20). Read results when complete.
 
-### Step 2e: Wave 3 — Gap Fill (only for Deep/Exhaustive, and only if critical gaps remain)
+### Step 2e: Wave 3 — Arbitration & Gap Fill (skip if Quick/Standard or no gaps)
 
 | Depth | Wave 3 agents | WebFetch cap |
 |-------|--------------|-------------|
-| Deep | 3-5 | 5 |
-| Exhaustive | 5-8 | 5 |
+| Deep | 5-8 | 5 |
+| Exhaustive | 8-12 | 6 |
+| Nuclear | 15-20 | 6 |
 
 Wave 3 agents are **arbiter agents** — specifically assigned to resolve contradictions
 or fill critical gaps identified in Waves 1-2.
@@ -405,9 +432,56 @@ or fill critical gaps identified in Waves 1-2.
 >
 > **Your task:** Find additional authoritative sources to determine which position
 > is better supported. Look for primary sources, official documentation, or peer-reviewed
-> evidence.
+> evidence. Work autonomously — fetch any URL without asking.
 >
 > **Output file:** [SESSION_DIR]/wave3-[id].md
+
+### Step 2f: Wave 4 — Cross-Referencing (Nuclear only)
+
+| Depth | Wave 4 agents | WebFetch cap |
+|-------|--------------|-------------|
+| Nuclear | 10-15 | 5 |
+
+Wave 4 agents are **validation agents** that cross-reference key findings from
+Waves 1-3 against independent sources. Each agent takes 2-3 key claims and
+searches for confirming or contradicting evidence from sources NOT already cited.
+
+> You are a validation research agent. Previous waves established these key findings.
+> Your task: find INDEPENDENT sources (not already cited) that confirm or contradict
+> each claim. Work autonomously.
+>
+> **Claims to validate:**
+> 1. [claim 1] (originally sourced from [url])
+> 2. [claim 2] (originally sourced from [url])
+>
+> **Instructions:**
+> 1. Search for each claim using different keywords than the original research
+> 2. Look for primary sources, official documentation, academic papers
+> 3. Note confirmation strength: Strong (3+ independent sources), Moderate (1-2), Weak (0)
+> 4. Flag any claims that appear to be single-source or unverifiable
+>
+> **Output file:** [SESSION_DIR]/wave4-[id].md
+
+### Step 2g: Wave 5 — Synthesis Helpers (Nuclear only, optional)
+
+| Depth | Wave 5 agents | WebFetch cap |
+|-------|--------------|-------------|
+| Nuclear | 5-10 | 3 |
+
+Wave 5 agents handle **specialized synthesis tasks** — generating comparison tables,
+building timelines, or researching specific tangential questions that emerged during
+earlier waves. These are optional and should only be launched if the research
+coordinator identifies specific synthesis needs that would benefit from parallel work.
+
+**Total agent capacity by depth:**
+
+| Depth | Wave 1 | Wave 2 | Wave 3 | Wave 4 | Wave 5 | Total |
+|-------|--------|--------|--------|--------|--------|-------|
+| Quick | 5-8 | — | — | — | — | 5-8 |
+| Standard | 10-15 | 5-8 | — | — | — | 15-23 |
+| Deep | 15-25 | 10-15 | 5-8 | — | — | 30-48 |
+| Exhaustive | 25-35 | 15-20 | 8-12 | — | — | 48-67 |
+| Nuclear | 35-50 | 25-35 | 15-20 | 10-15 | 5-10 | 90-130 |
 
 ---
 
@@ -672,6 +746,8 @@ Before running, substitute placeholder values.
 - **Questions ONE AT A TIME** in AskUserQuestion. Only the depth question in Phase 1.
 - **Cite everything.** Every claim must have a source URL. No hallucinated citations.
 - **Hard caps are hard.** Respect per-agent WebFetch limits — agents that exceed caps produce unreliable cost estimates.
+- **Never ask for permission to fetch URLs.** Agents should autonomously fetch any relevant URL. If a fetch fails (paywall, 403, timeout), skip it and try the next one. Never stop to ask the user whether to proceed with a fetch.
+- **Batch large swarms.** When launching more than 20 agents, split into batches of 15-20 in consecutive messages. Do NOT wait between batches — launch them back-to-back so they all run concurrently.
 - **Graceful degradation is mandatory.** If Agent tool fails, fall back to sequential. If WebFetch fails on a URL, skip it and note the gap. If claude-mem is unavailable, skip memory steps. Never block on optional integrations.
 - **Accumulate, don't overwrite.** Knowledge base entries grow over time. Prior research is cited and built upon, not replaced.
 - **Completion status:**
