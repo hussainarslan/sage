@@ -25,7 +25,7 @@ This section is referenced by all skill preambles when they detect `UPGRADE_AVAI
 First, check if auto-upgrade is enabled:
 ```bash
 _AUTO=""
-[ "${SAGE_AUTO_UPGRADE:-}" = "1" ] && _AUTO="true"
+[ "${GSTACK_AUTO_UPGRADE:-}" = "1" ] && _AUTO="true"
 [ -z "$_AUTO" ] && _AUTO=$(~/.claude/skills/sage/bin/sage-config get auto_upgrade 2>/dev/null || true)
 echo "AUTO_UPGRADE=$_AUTO"
 ```
@@ -77,9 +77,15 @@ Continue with the current skill.
 if [ -d "$HOME/.claude/skills/sage/.git" ]; then
   INSTALL_TYPE="global-git"
   INSTALL_DIR="$HOME/.claude/skills/sage"
+elif [ -d "$HOME/.sage/repos/sage/.git" ]; then
+  INSTALL_TYPE="global-git"
+  INSTALL_DIR="$HOME/.sage/repos/sage"
 elif [ -d ".claude/skills/sage/.git" ]; then
   INSTALL_TYPE="local-git"
   INSTALL_DIR=".claude/skills/sage"
+elif [ -d ".agents/skills/sage/.git" ]; then
+  INSTALL_TYPE="local-git"
+  INSTALL_DIR=".agents/skills/sage"
 elif [ -d ".claude/skills/sage" ]; then
   INSTALL_TYPE="vendored"
   INSTALL_DIR=".claude/skills/sage"
@@ -121,9 +127,9 @@ If `$STASH_OUTPUT` contains "Saved working directory", warn the user: "Note: loc
 ```bash
 PARENT=$(dirname "$INSTALL_DIR")
 TMP_DIR=$(mktemp -d)
-git clone --depth 1 https://github.com/hussainarslan/sage.git "$TMP_DIR/sage"
+git clone --depth 1 https://github.com/garrytan/gstack.git "$TMP_DIR/gstack"
 mv "$INSTALL_DIR" "$INSTALL_DIR.bak"
-mv "$TMP_DIR/sage" "$INSTALL_DIR"
+mv "$TMP_DIR/gstack" "$INSTALL_DIR"
 cd "$INSTALL_DIR" && ./setup
 rm -rf "$INSTALL_DIR.bak" "$TMP_DIR"
 ```
@@ -134,33 +140,33 @@ Use the install directory from Step 2. Check if there's also a local vendored co
 
 ```bash
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-LOCAL_SAGE=""
+LOCAL_GSTACK=""
 if [ -n "$_ROOT" ] && [ -d "$_ROOT/.claude/skills/sage" ]; then
   _RESOLVED_LOCAL=$(cd "$_ROOT/.claude/skills/sage" && pwd -P)
   _RESOLVED_PRIMARY=$(cd "$INSTALL_DIR" && pwd -P)
   if [ "$_RESOLVED_LOCAL" != "$_RESOLVED_PRIMARY" ]; then
-    LOCAL_SAGE="$_ROOT/.claude/skills/sage"
+    LOCAL_GSTACK="$_ROOT/.claude/skills/sage"
   fi
 fi
-echo "LOCAL_SAGE=$LOCAL_SAGE"
+echo "LOCAL_GSTACK=$LOCAL_GSTACK"
 ```
 
-If `LOCAL_SAGE` is non-empty, update it by copying from the freshly-upgraded primary install (same approach as README vendored install):
+If `LOCAL_GSTACK` is non-empty, update it by copying from the freshly-upgraded primary install (same approach as README vendored install):
 ```bash
-mv "$LOCAL_SAGE" "$LOCAL_SAGE.bak"
-cp -Rf "$INSTALL_DIR" "$LOCAL_SAGE"
-rm -rf "$LOCAL_SAGE/.git"
-cd "$LOCAL_SAGE" && ./setup
-rm -rf "$LOCAL_SAGE.bak"
+mv "$LOCAL_GSTACK" "$LOCAL_GSTACK.bak"
+cp -Rf "$INSTALL_DIR" "$LOCAL_GSTACK"
+rm -rf "$LOCAL_GSTACK/.git"
+cd "$LOCAL_GSTACK" && ./setup
+rm -rf "$LOCAL_GSTACK.bak"
 ```
-Tell user: "Also updated vendored copy at `$LOCAL_SAGE` — commit `.claude/skills/sage/` when you're ready."
+Tell user: "Also updated vendored copy at `$LOCAL_GSTACK` — commit `.claude/skills/sage/` when you're ready."
 
 If `./setup` fails, restore from backup and warn the user:
 ```bash
-rm -rf "$LOCAL_SAGE"
-mv "$LOCAL_SAGE.bak" "$LOCAL_SAGE"
+rm -rf "$LOCAL_GSTACK"
+mv "$LOCAL_GSTACK.bak" "$LOCAL_GSTACK"
 ```
-Tell user: "Sync failed — restored previous version at `$LOCAL_SAGE`. Run `/sage-upgrade` manually to retry."
+Tell user: "Sync failed — restored previous version at `$LOCAL_GSTACK`. Run `/sage-upgrade` manually to retry."
 
 ### Step 5: Write marker + clear cache
 
@@ -208,14 +214,14 @@ Use the output to determine if an upgrade is available.
 
 3. If no output (primary is up to date): check for a stale local vendored copy.
 
-Run the Step 2 bash block above to detect the primary install type and directory (`INSTALL_TYPE` and `INSTALL_DIR`). Then run the Step 4.5 detection bash block above to check for a local vendored copy (`LOCAL_SAGE`).
+Run the Step 2 bash block above to detect the primary install type and directory (`INSTALL_TYPE` and `INSTALL_DIR`). Then run the Step 4.5 detection bash block above to check for a local vendored copy (`LOCAL_GSTACK`).
 
-**If `LOCAL_SAGE` is empty** (no local vendored copy): tell the user "You're already on the latest version (v{version})."
+**If `LOCAL_GSTACK` is empty** (no local vendored copy): tell the user "You're already on the latest version (v{version})."
 
-**If `LOCAL_SAGE` is non-empty**, compare versions:
+**If `LOCAL_GSTACK` is non-empty**, compare versions:
 ```bash
 PRIMARY_VER=$(cat "$INSTALL_DIR/VERSION" 2>/dev/null || echo "unknown")
-LOCAL_VER=$(cat "$LOCAL_SAGE/VERSION" 2>/dev/null || echo "unknown")
+LOCAL_VER=$(cat "$LOCAL_GSTACK/VERSION" 2>/dev/null || echo "unknown")
 echo "PRIMARY=$PRIMARY_VER LOCAL=$LOCAL_VER"
 ```
 
