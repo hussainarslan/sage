@@ -39,7 +39,7 @@ create PRs, or take implementation actions. Your only outputs are knowledge arti
 ### Step 0a: Detect project context
 
 ```bash
-eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null || echo 'SLUG=unknown')"
+eval "$(~/.claude/skills/sage/bin/sage-slug 2>/dev/null || echo 'SLUG=unknown')"
 echo "SLUG=$SLUG"
 echo "BRANCH=$BRANCH"
 ```
@@ -52,7 +52,7 @@ Search for existing knowledge. Run ALL of these checks:
 
 ```bash
 # Check project-specific research index
-SLUG_DIR="$HOME/.gstack/projects/$SLUG"
+SLUG_DIR="$HOME/.sage/projects/$SLUG"
 if [ -f "$SLUG_DIR/research-index.jsonl" ]; then
   echo "=== PROJECT RESEARCH HISTORY ==="
   cat "$SLUG_DIR/research-index.jsonl"
@@ -63,16 +63,16 @@ fi
 
 ```bash
 # Check cross-project knowledge base
-if [ -d "$HOME/.gstack/knowledge" ]; then
+if [ -d "$HOME/.sage/knowledge" ]; then
   echo "=== KNOWLEDGE BASE INDEX ==="
-  if [ -f "$HOME/.gstack/knowledge/index.jsonl" ]; then
-    cat "$HOME/.gstack/knowledge/index.jsonl"
+  if [ -f "$HOME/.sage/knowledge/index.jsonl" ]; then
+    cat "$HOME/.sage/knowledge/index.jsonl"
   else
     echo "No knowledge index found."
   fi
   echo ""
   echo "=== KNOWLEDGE FILES ==="
-  ls -la "$HOME/.gstack/knowledge/" 2>/dev/null || echo "Empty."
+  ls -la "$HOME/.sage/knowledge/" 2>/dev/null || echo "Empty."
 else
   echo "No knowledge base found. This will be the first entry."
 fi
@@ -156,8 +156,8 @@ Record the user's depth choice for agent wave sizing.
 
 ```bash
 SESSION_ID="research-$(date +%s)"
-mkdir -p "/tmp/gstack-$SESSION_ID"
-echo "SESSION_DIR=/tmp/gstack-$SESSION_ID"
+mkdir -p "/tmp/sage-$SESSION_ID"
+echo "SESSION_DIR=/tmp/sage-$SESSION_ID"
 echo "SESSION_ID=$SESSION_ID"
 ```
 
@@ -252,7 +252,7 @@ This is slower but still works.
 After Wave 1 completes, read all output files:
 
 ```bash
-SESSION_DIR="/tmp/gstack-$SESSION_ID"
+SESSION_DIR="/tmp/sage-$SESSION_ID"
 echo "=== WAVE 1 RESULTS ==="
 for f in "$SESSION_DIR"/wave1-*.md; do
   [ -f "$f" ] && echo "--- $(basename "$f") ---" && cat "$f" && echo ""
@@ -331,7 +331,7 @@ for each. Run them all in parallel (batched if >20).
 #### Step 2d-read: Read and analyze Wave 2 results
 
 ```bash
-SESSION_DIR="/tmp/gstack-$SESSION_ID"
+SESSION_DIR="/tmp/sage-$SESSION_ID"
 echo "=== WAVE 2 RESULTS ==="
 for f in "$SESSION_DIR"/wave2-*.md; do
   [ -f "$f" ] && echo "--- $(basename "$f") ---" && cat "$f" && echo ""
@@ -397,7 +397,7 @@ for each. Run them all in parallel (batched if >20).
 #### Step 2e-read: Read and analyze Wave 3 results
 
 ```bash
-SESSION_DIR="/tmp/gstack-$SESSION_ID"
+SESSION_DIR="/tmp/sage-$SESSION_ID"
 echo "=== WAVE 3 RESULTS ==="
 for f in "$SESSION_DIR"/wave3-*.md; do
   [ -f "$f" ] && echo "--- $(basename "$f") ---" && cat "$f" && echo ""
@@ -467,7 +467,7 @@ for each. Run them all in parallel.
 #### Step 2f-read: Read and analyze Wave 4 results
 
 ```bash
-SESSION_DIR="/tmp/gstack-$SESSION_ID"
+SESSION_DIR="/tmp/sage-$SESSION_ID"
 echo "=== WAVE 4 RESULTS ==="
 for f in "$SESSION_DIR"/wave4-*.md; do
   [ -f "$f" ] && echo "--- $(basename "$f") ---" && cat "$f" && echo ""
@@ -521,7 +521,7 @@ for each. Run them all in parallel.
 #### Step 2g-read: Read and analyze Wave 5 results
 
 ```bash
-SESSION_DIR="/tmp/gstack-$SESSION_ID"
+SESSION_DIR="/tmp/sage-$SESSION_ID"
 echo "=== WAVE 5 RESULTS ==="
 for f in "$SESSION_DIR"/wave5-*.md; do
   [ -f "$f" ] && echo "--- $(basename "$f") ---" && cat "$f" && echo ""
@@ -571,7 +571,7 @@ This final briefing is the primary input for Phase 3 (Filter + Rank) and Phase 4
 Before proceeding to Phase 3, verify all REQUIRED waves launched enough agents:
 
 ```bash
-SESSION_DIR="/tmp/gstack-$SESSION_ID"
+SESSION_DIR="/tmp/sage-$SESSION_ID"
 echo "=== WAVE COMPLETION CHECK ==="
 for wave in 1 2 3 4 5; do
   count=$(ls "$SESSION_DIR"/wave${wave}-*.md 2>/dev/null | wc -l | tr -d ' ')
@@ -605,7 +605,7 @@ output of the entire wave chain. Use the highest-numbered briefing available:
 - Nuclear → `briefing-final.md`
 
 ```bash
-SESSION_DIR="/tmp/gstack-$SESSION_ID"
+SESSION_DIR="/tmp/sage-$SESSION_ID"
 echo "=== BRIEFING FILES ==="
 ls -la "$SESSION_DIR"/briefing-*.md 2>/dev/null
 echo ""
@@ -739,7 +739,7 @@ Use the SLUG from Phase 0, the user name, and a topic slug derived from the rese
 topic (lowercase, hyphens, max 40 chars).
 
 ```bash
-SLUG_DIR="$HOME/.gstack/projects/$SLUG"
+SLUG_DIR="$HOME/.sage/projects/$SLUG"
 mkdir -p "$SLUG_DIR"
 TOPIC_SLUG="[topic-slug-here]"
 DATETIME=$(date +%Y%m%d-%H%M%S)
@@ -778,7 +778,7 @@ Write structured data to the DATA_PATH as JSON:
 Append to the project research index:
 
 ```bash
-SLUG_DIR="$HOME/.gstack/projects/$SLUG"
+SLUG_DIR="$HOME/.sage/projects/$SLUG"
 echo '{"topic":"TOPIC","topicSlug":"TOPIC_SLUG","date":"DATE","depth":"DEPTH","sourcesTotal":N,"reportPath":"REPORT_PATH"}' >> "$SLUG_DIR/research-index.jsonl"
 ```
 
@@ -787,10 +787,10 @@ Before running this command, substitute the placeholder values from the report y
 ### Step 5d: Update cross-project knowledge base
 
 ```bash
-mkdir -p "$HOME/.gstack/knowledge"
+mkdir -p "$HOME/.sage/knowledge"
 ```
 
-Write or update `~/.gstack/knowledge/[topic-slug].md` — this is a **living document**
+Write or update `~/.sage/knowledge/[topic-slug].md` — this is a **living document**
 that accumulates knowledge across research sessions. Structure:
 
 ```markdown
@@ -826,7 +826,7 @@ Update the knowledge index:
 ```bash
 # Append or update entry in index.jsonl
 # If an entry with this topicSlug already exists, replace it; otherwise append
-KNOWLEDGE_DIR="$HOME/.gstack/knowledge"
+KNOWLEDGE_DIR="$HOME/.sage/knowledge"
 TOPIC_SLUG="[topic-slug]"
 if [ -f "$KNOWLEDGE_DIR/index.jsonl" ]; then
   grep -v "\"slug\":\"$TOPIC_SLUG\"" "$KNOWLEDGE_DIR/index.jsonl" > "$KNOWLEDGE_DIR/index.jsonl.tmp" || true
@@ -849,7 +849,7 @@ If claude-mem is not available, skip this step gracefully.
 ### Step 5f: Cleanup temp files
 
 ```bash
-SESSION_DIR="/tmp/gstack-$SESSION_ID"
+SESSION_DIR="/tmp/sage-$SESSION_ID"
 rm -rf "$SESSION_DIR"
 echo "Cleaned up session workspace: $SESSION_DIR"
 ```
@@ -871,7 +871,7 @@ After the report, suggest next steps based on the topic and findings:
 Log completion:
 
 ```bash
-~/.claude/skills/gstack/bin/gstack-review-log '{"skill":"research","timestamp":"TIMESTAMP","status":"STATUS","depth":"DEPTH","sources":N,"topic":"TOPIC"}'
+~/.claude/skills/sage/bin/sage-review-log '{"skill":"research","timestamp":"TIMESTAMP","status":"STATUS","depth":"DEPTH","sources":N,"topic":"TOPIC"}'
 ```
 
 Before running, substitute placeholder values.

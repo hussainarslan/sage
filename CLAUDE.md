@@ -1,4 +1,4 @@
-# gstack development
+# sage development
 
 ## Commands
 
@@ -15,7 +15,7 @@ bun run build        # gen docs + compile binaries
 bun run gen:skill-docs  # regenerate SKILL.md files from templates
 bun run skill:check  # health dashboard for all skills
 bun run dev:skill    # watch mode: auto-regen + validate on change
-bun run eval:list    # list all eval runs from ~/.gstack-dev/evals/
+bun run eval:list    # list all eval runs from ~/.sage-dev/evals/
 bun run eval:compare # compare two eval runs (auto-picks most recent)
 bun run eval:summary # aggregate stats across all eval runs
 bun run research:list    # list all research sessions across projects
@@ -24,7 +24,7 @@ bun run research:search  # search research reports and knowledge base
 
 `test:evals` requires `ANTHROPIC_API_KEY`. E2E tests stream progress in real-time
 (tool-by-tool via `--output-format stream-json --verbose`). Results are persisted
-to `~/.gstack-dev/evals/` with auto-comparison against the previous run.
+to `~/.sage-dev/evals/` with auto-comparison against the previous run.
 
 **Diff-based test selection:** `test:evals` and `test:e2e` auto-select tests based
 on `git diff` against the base branch. Each test declares its file dependencies in
@@ -46,7 +46,7 @@ tests via `claude -p`. Both must pass before creating a PR.
 ## Project structure
 
 ```
-gstack/
+sage/
 ├── browse/          # Headless browser CLI (Playwright)
 │   ├── src/         # CLI + server + commands
 │   │   ├── commands.ts  # Command registry (single source of truth)
@@ -99,11 +99,11 @@ Skills must NEVER hardcode framework-specific commands, file patterns, or direct
 structures. Instead:
 
 1. **Read CLAUDE.md** for project-specific config (test commands, eval commands, etc.)
-2. **If missing, AskUserQuestion** — let the user tell you or let gstack search the repo
+2. **If missing, AskUserQuestion** — let the user tell you or let sage search the repo
 3. **Persist the answer to CLAUDE.md** so we never have to ask again
 
 This applies to test commands, eval commands, deploy commands, and any other
-project-specific behavior. The project owns its config; gstack reads it.
+project-specific behavior. The project owns its config; sage reads it.
 
 ## Writing SKILL templates
 
@@ -131,21 +131,21 @@ project uses.
 
 ## Vendored symlink awareness
 
-When developing gstack, `.claude/skills/gstack` may be a symlink back to this
+When developing sage, `.claude/skills/sage` may be a symlink back to this
 working directory (gitignored). This means skill changes are **live immediately** —
 great for rapid iteration, risky during big refactors where half-written skills
-could break other Claude Code sessions using gstack concurrently.
+could break other Claude Code sessions using sage concurrently.
 
-**Check once per session:** Run `ls -la .claude/skills/gstack` to see if it's a
+**Check once per session:** Run `ls -la .claude/skills/sage` to see if it's a
 symlink or a real copy. If it's a symlink to your working directory, be aware that:
-- Template changes + `bun run gen:skill-docs` immediately affect all gstack invocations
-- Breaking changes to SKILL.md.tmpl files can break concurrent gstack sessions
-- During large refactors, remove the symlink (`rm .claude/skills/gstack`) so the
-  global install at `~/.claude/skills/gstack/` is used instead
+- Template changes + `bun run gen:skill-docs` immediately affect all sage invocations
+- Breaking changes to SKILL.md.tmpl files can break concurrent sage sessions
+- During large refactors, remove the symlink (`rm .claude/skills/sage`) so the
+  global install at `~/.claude/skills/sage/` is used instead
 
 **For plan reviews:** When reviewing plans that modify skill templates or the
 gen-skill-docs pipeline, consider whether the changes should be tested in isolation
-before going live (especially if the user is actively using gstack in other windows).
+before going live (especially if the user is actively using sage in other windows).
 
 ## Commit style
 
@@ -178,9 +178,9 @@ CHANGELOG.md is **for users**, not contributors. Write it like product release n
 
 ## AI effort compression
 
-When estimating or discussing effort, always show both human-team and CC+gstack time:
+When estimating or discussing effort, always show both human-team and CC+sage time:
 
-| Task type | Human team | CC+gstack | Compression |
+| Task type | Human team | CC+sage | Compression |
 |-----------|-----------|-----------|-------------|
 | Boilerplate / scaffolding | 2 days | 15 min | ~100x |
 | Test writing | 1 day | 15 min | ~50x |
@@ -195,7 +195,7 @@ Completeness Principle in the skill preamble for the full philosophy.
 
 ## Local plans
 
-Contributors can store long-range vision docs and design documents in `~/.gstack-dev/plans/`.
+Contributors can store long-range vision docs and design documents in `~/.sage-dev/plans/`.
 These are local-only (not checked in). When reviewing TODOS.md, check `plans/` for candidates
 that may be ready to promote to TODOs or implement.
 
@@ -216,10 +216,10 @@ regenerated SKILL.md shifts prompt context.
 
 ## Deploying to the active skill
 
-The active skill lives at `~/.claude/skills/gstack/`. After making changes:
+The active skill lives at `~/.claude/skills/sage/`. After making changes:
 
 1. Push your branch
-2. Fetch and reset in the skill directory: `cd ~/.claude/skills/gstack && git fetch origin && git reset --hard origin/main`
-3. Rebuild: `cd ~/.claude/skills/gstack && bun run build`
+2. Fetch and reset in the skill directory: `cd ~/.claude/skills/sage && git fetch origin && git reset --hard origin/main`
+3. Rebuild: `cd ~/.claude/skills/sage && bun run build`
 
-Or copy the binary directly: `cp browse/dist/browse ~/.claude/skills/gstack/browse/dist/browse`
+Or copy the binary directly: `cp browse/dist/browse ~/.claude/skills/sage/browse/dist/browse`

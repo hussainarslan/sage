@@ -12,9 +12,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-const GSTACK_DIR = path.join(os.homedir(), '.gstack');
-const PROJECTS_DIR = path.join(GSTACK_DIR, 'projects');
-const KNOWLEDGE_DIR = path.join(GSTACK_DIR, 'knowledge');
+const SAGE_DIR = path.join(os.homedir(), '.sage');
+const PROJECTS_DIR = path.join(SAGE_DIR, 'projects');
+const KNOWLEDGE_DIR = path.join(SAGE_DIR, 'knowledge');
 
 interface SearchResult {
   type: 'report' | 'knowledge';

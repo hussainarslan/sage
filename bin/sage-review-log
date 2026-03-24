@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# sage-review-log — atomically log a review result
+# Usage: sage-review-log '{"skill":"...","timestamp":"...","status":"..."}'
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+eval $("$SCRIPT_DIR/sage-slug" 2>/dev/null)
+SAGE_HOME="${SAGE_HOME:-$HOME/.sage}"
+mkdir -p "$SAGE_HOME/projects/$SLUG"
+echo "$1" >> "$SAGE_HOME/projects/$SLUG/$BRANCH-reviews.jsonl"

@@ -2,7 +2,7 @@
 /**
  * research-list — CLI dashboard for viewing research sessions.
  *
- * Reads ~/.gstack/projects/*/research-index.jsonl and ~/.gstack/knowledge/index.jsonl
+ * Reads ~/.sage/projects/*/research-index.jsonl and ~/.sage/knowledge/index.jsonl
  * to display research history across all projects.
  *
  * Usage:
@@ -30,9 +30,9 @@ interface KnowledgeEntry {
   sourceCount: number;
 }
 
-const GSTACK_DIR = path.join(os.homedir(), '.gstack');
-const PROJECTS_DIR = path.join(GSTACK_DIR, 'projects');
-const KNOWLEDGE_DIR = path.join(GSTACK_DIR, 'knowledge');
+const SAGE_DIR = path.join(os.homedir(), '.sage');
+const PROJECTS_DIR = path.join(SAGE_DIR, 'projects');
+const KNOWLEDGE_DIR = path.join(SAGE_DIR, 'knowledge');
 
 function parseJsonl<T>(filePath: string): T[] {
   if (!fs.existsSync(filePath)) return [];
